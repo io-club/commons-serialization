@@ -14,6 +14,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
+fun ByteArray.encapsulateToList(): List<ByteArray> = listOf(size.naturalEncapsulateToCompressed(), this)
+
 /**
  * Write the size of data and the data to the byte array.
  *
