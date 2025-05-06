@@ -20,18 +20,16 @@ import java.nio.ByteBuffer
 // To get the index of the first non-zero byte
 
 @JvmOverloads
-fun ByteArray.getFirstNonZeroIndexIn(from: Int = 0, to: Int = size): Int {
+fun ByteArray.findFirstNonZeroByte(from: Int = 0, to: Int = size): Int {
     for (i in from..<to) if (get(i) != ZERO_BYTE) return i
     return to
 }
-
-val ByteArray.firstNonZeroIndex get() = getFirstNonZeroIndexIn()
 
 // To get no-leading-zero byte array
 
 @JvmOverloads
 fun ByteArray.toNoLeadingZeroBytes(from: Int, to: Int, dst: ByteArray, off: Int = 0): Int =
-    getFirstNonZeroIndexIn(from, to).let {
+    findFirstNonZeroByte(from, to).let {
         val len = to - it
         System.arraycopy(this, it, dst, off, to - it)
         len
@@ -45,12 +43,10 @@ fun ByteArray.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = toNoLeadingZe
 
 @JvmOverloads
 fun ByteArray.toNoLeadingZeroBytes(from: Int = 0, to: Int = size): ByteArray {
-    val i = getFirstNonZeroIndexIn(from, to)
+    val i = findFirstNonZeroByte(from, to)
     val len = to - i
     return ByteArray(len).also { System.arraycopy(this, i, it, 0, len) }
 }
-
-//val ByteArray.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
 
 // To put into byte array
 
@@ -89,10 +85,6 @@ fun BigInteger.toNoLeadingZeroBytes() = naturalToBytes() // No leading zeros alr
 fun Long.toNoLeadingZeroBytes() = naturalToBytes().toNoLeadingZeroBytes()
 fun Int.toNoLeadingZeroBytes() = naturalToBytes().toNoLeadingZeroBytes()
 fun Short.toNoLeadingZeroBytes() = naturalToBytes().toNoLeadingZeroBytes()
-//val BigInteger.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
-//val Long.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
-//val Int.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
-//val Short.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
 
 // To put into byte buffer
 fun ByteBuffer.putNoLeadingZero(value: BigInteger) = putNoLeadingZeroBigInteger(value, ::put)

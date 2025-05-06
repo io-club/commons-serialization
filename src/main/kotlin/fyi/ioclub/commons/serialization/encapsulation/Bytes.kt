@@ -214,7 +214,6 @@ fun ByteArray.encapsulateToBytes(off: Int, len: Int): ByteArray {
  */
 @JvmOverloads
 fun ByteArray.encapsulateToBytes(len: Int = size) = encapsulateToBytes(0, size)
-//val ByteArray.encapsulatedBytes get() = encapsulateToBytes()
 
 /**
  * Read packed data from buffer by its size indicated in the byte buffer.

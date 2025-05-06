@@ -120,8 +120,3 @@ fun UShort.naturalToBytes(len: Int = UShort.SIZE_BYTES) = toShort().naturalToByt
 
 @JvmOverloads
 fun UByte.naturalToBytes(len: Int = UByte.SIZE_BYTES) = toByte().naturalToBytes(len)
-
-//val ULong.naturalBytes get() = naturalToBytes()
-//val UInt.naturalBytes get() = naturalToBytes()
-//val UShort.naturalBytes get() = naturalToBytes()
-//val UByte.naturalBytes get() = naturalToBytes()

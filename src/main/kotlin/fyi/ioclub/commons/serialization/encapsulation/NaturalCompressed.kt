@@ -17,7 +17,7 @@
 package fyi.ioclub.commons.serialization.encapsulation
 
 import fyi.ioclub.commons.serialization.natural.BIG_INTEGER_NATURAL_DEFAULT_SIZE
-import fyi.ioclub.commons.serialization.natural.firstNonZeroIndex
+import fyi.ioclub.commons.serialization.natural.findFirstNonZeroByte
 import fyi.ioclub.commons.serialization.natural.getNaturalBigInteger
 import fyi.ioclub.commons.serialization.natural.getNaturalByte
 import fyi.ioclub.commons.serialization.natural.getNaturalInt
@@ -57,7 +57,7 @@ private inline fun <reified T> bufferEncapsulateLIS(
         return 1
     }
     val src = naturalToBytes(value, maxLen)
-    val srcOff = src.firstNonZeroIndex
+    val srcOff = src.findFirstNonZeroByte()
     val srcLen = maxLen - srcOff
     firstByteWriter((srcLen + 0b1000_0000).toByte())
     byteArrayWriter(src, srcOff, srcLen)
@@ -326,7 +326,7 @@ private inline fun encapsulateToCompressedLIS(
 ): ByteArray {
     if (isSmall) return byteArrayOf(toByte())
     val src = naturalToBytes(maxLen)
-    val off = src.firstNonZeroIndex
+    val off = src.findFirstNonZeroByte()
     val naturalSize = maxLen - off
     val dst = ByteArray(1 + naturalSize)
     dst[0] = (naturalSize + 0b1000_0000).toByte()
@@ -367,16 +367,6 @@ private const val BYTE_0: Byte = 0
 
 fun Byte.naturalEncapsulateToCompressed() =
     if (this >= BYTE_0) byteArrayOf(this) else ByteArray(2).apply { encapsulateNaturalCompressed(this@naturalEncapsulateToCompressed) }
-
-//val BigInteger.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val ULong.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val UInt.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val UShort.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val UByte.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val Long.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val Int.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val Short.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
-//val Byte.naturalEncapsulatedCompressed get() = naturalEncapsulateCompressed()
 
 /**
  * Read a natural number from the byte buffer.

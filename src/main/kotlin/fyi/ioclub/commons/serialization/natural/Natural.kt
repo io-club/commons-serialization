@@ -226,9 +226,3 @@ fun Short.naturalToBytes(len: Int = Short.SIZE_BYTES) = naturalToBytesBasic(len,
 
 @JvmOverloads
 fun Byte.naturalToBytes(len: Int = Byte.SIZE_BYTES) = naturalToBytesBasic(len, ::naturalToBytes)
-
-//val BigInteger.naturalBytes get() = naturalToBytes()
-//val Long.naturalBytes get() = naturalToBytes()
-//val Int.naturalBytes get() = naturalToBytes()
-//val Short.naturalBytes get() = naturalToBytes()
-//val Byte.naturalBytes get() = naturalToBytes()
