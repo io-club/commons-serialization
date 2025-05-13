@@ -136,7 +136,7 @@ fun ByteArray.putNatural(value: Short, off: Int, len: Int) = putNatural(value.to
 
 @JvmOverloads
 fun ByteArray.putNatural(value: Byte, len: Int = size) = putNatural(value, 0, len)
-fun ByteArray.putNatural(value: Byte, off: Int, len: Int) = { this[off + len - 1] = value }
+fun ByteArray.putNatural(value: Byte, off: Int, len: Int) { this[off + len - 1] = value }
 
 private inline fun <reified T> writeNaturalTemplate(
     value: T,
