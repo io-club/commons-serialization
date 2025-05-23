@@ -12,88 +12,91 @@
 
 package fyi.ioclub.commons.serialization.natural
 
+import fyi.ioclub.commons.datamodel.array.slice.ByteArraySlice
+import fyi.ioclub.commons.datamodel.array.slice.asSliceFrom
+import fyi.ioclub.commons.datamodel.array.slice.put
+import fyi.ioclub.commons.datamodel.array.slice.write
 import java.io.OutputStream
-import java.math.BigInteger
 import java.nio.ByteBuffer
 
 
-// To get the index of the first non-zero byte
+// To get array index of the first non-zero byte
 
-@JvmOverloads
-fun ByteArray.findFirstNonZeroByte(from: Int = 0, to: Int = size): Int {
-    for (i in from..<to) if (get(i) != ZERO_BYTE) return i
-    return to
+fun ByteArraySlice.arrayFindFirstNonZeroByte(): Int = with(arrayIterator()) {
+    Iterable { this }.any { it != BYTE_0 }
+    nextIndex()
 }
 
 // To get no-leading-zero byte array
 
-@JvmOverloads
-fun ByteArray.toNoLeadingZeroBytes(from: Int, to: Int, dst: ByteArray, off: Int = 0): Int =
-    findFirstNonZeroByte(from, to).let {
-        val len = to - it
-        System.arraycopy(this, it, dst, off, to - it)
-        len
-    }
-
-@JvmOverloads
-fun ByteArray.toNoLeadingZeroBytes(from: Int, dst: ByteArray, off: Int = 0) = toNoLeadingZeroBytes(from, size, dst, off)
-
-@JvmOverloads
-fun ByteArray.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = toNoLeadingZeroBytes(0, size, dst, off)
-
-@JvmOverloads
-fun ByteArray.toNoLeadingZeroBytes(from: Int = 0, to: Int = size): ByteArray {
-    val i = findFirstNonZeroByte(from, to)
-    val len = to - i
-    return ByteArray(len).also { System.arraycopy(this, i, it, 0, len) }
+fun ByteArraySlice.noLeadingZeroTo(destination: ByteArraySlice): Int = with(toNoLeadingZeroByteArraySlice()) {
+    copyInto(destination)
+    length
 }
+
+fun ByteArraySlice.toNoLeadingZeroByteArray(): ByteArray = toNoLeadingZeroByteArraySlice().toSlicedArray()
+
+fun ByteArraySlice.toNoLeadingZeroByteArraySlice(): ByteArraySlice = asSliceFrom(arrayFindFirstNonZeroByte())
 
 // To put into byte array
 
-private inline fun putNoLeadingZeroBigInteger(value: BigInteger, writer: (ByteArray, Int, Int) -> Unit): Int {
-    val src = value.toByteArray()
-    val off = if (src[0] == ZERO_BYTE) 0 else 1
-    return (src.size - off).also { writer(src, off, it) }
-}
+fun ByteArraySlice.putNaturalNoLeadingZero(value: NaturalBigInteger) =
+    wOpTmpl(value::naturalToByteArraySlice, ::copyInto)
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: BigInteger, off: Int = 0) =
-    putNoLeadingZeroBigInteger(value) { src, srcOff, len -> System.arraycopy(src, srcOff, this, off, len) }
+fun ByteArraySlice.putNaturalNoLeadingZero(value: Long) = putNoLead0LISTmpl(value::naturalToByteArraySlice)
+fun ByteArraySlice.putNaturalNoLeadingZero(value: Int) = putNoLead0LISTmpl(value::naturalToByteArraySlice)
+fun ByteArraySlice.putNaturalNoLeadingZero(value: Short) = putNoLead0LISTmpl(value::naturalToByteArraySlice)
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: Long, off: Int = 0) = value.naturalToBytes().toNoLeadingZeroBytes(this, off)
+private inline fun ByteArraySlice.putNoLead0LISTmpl(nToBas: () -> ByteArraySlice) = wOpTmpl(nToBas, ::noLeadingZeroTo)
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: Int, off: Int = 0) = value.naturalToBytes().toNoLeadingZeroBytes(this, off)
+fun NaturalBigInteger.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun Long.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun Int.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun Short.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: Short, off: Int = 0) = value.naturalToBytes().toNoLeadingZeroBytes(this, off)
+fun NaturalBigInteger.toNoLeadingZeroByteArray(): ByteArray = naturalToByteArray(AUTO)
+fun Long.toNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
+fun Int.toNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
+fun Short.toNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
 
-@JvmOverloads
-fun BigInteger.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = dst.putNoLeadingZero(this, off)
+fun NaturalBigInteger.naturalToNoLeadingZeroByteArraySlice(): ByteArraySlice = naturalToByteArraySlice(AUTO)
 
-@JvmOverloads
-fun Long.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = dst.putNoLeadingZero(this, off)
+fun Long.naturalToNoLeadingZeroByteArraySlice(): ByteArraySlice =
+    naturalToByteArraySlice().toNoLeadingZeroByteArraySlice()
 
-@JvmOverloads
-fun Int.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = dst.putNoLeadingZero(this, off)
+fun Int.naturalToNoLeadingZeroByteArraySlice(): ByteArraySlice =
+    naturalToByteArraySlice().toNoLeadingZeroByteArraySlice()
 
-@JvmOverloads
-fun Short.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = dst.putNoLeadingZero(this, off)
-
-fun BigInteger.toNoLeadingZeroBytes() = naturalToBytes() // No leading zeros already
-fun Long.toNoLeadingZeroBytes() = naturalToBytes().toNoLeadingZeroBytes()
-fun Int.toNoLeadingZeroBytes() = naturalToBytes().toNoLeadingZeroBytes()
-fun Short.toNoLeadingZeroBytes() = naturalToBytes().toNoLeadingZeroBytes()
+fun Short.naturalToNoLeadingZeroByteArraySlice(): ByteArraySlice =
+    naturalToByteArraySlice().toNoLeadingZeroByteArraySlice()
 
 // To put into byte buffer
-fun ByteBuffer.putNoLeadingZero(value: BigInteger) = putNoLeadingZeroBigInteger(value, ::put)
-fun ByteBuffer.putNoLeadingZero(value: Long) = value.toNoLeadingZeroBytes().let { put(it); it.size }
-fun ByteBuffer.putNoLeadingZero(value: Int) = value.toNoLeadingZeroBytes().let { put(it); it.size }
-fun ByteBuffer.putNoLeadingZero(value: Short) = value.toNoLeadingZeroBytes().let { put(it); it.size }
 
-// To put into output stream
-fun OutputStream.putNoLeadingZero(value: BigInteger) = putNoLeadingZeroBigInteger(value, ::write)
-fun OutputStream.putNoLeadingZero(value: Long) = value.toNoLeadingZeroBytes().let { write(it); it.size }
-fun OutputStream.putNoLeadingZero(value: Int) = value.toNoLeadingZeroBytes().let { write(it); it.size }
-fun OutputStream.putNoLeadingZero(value: Short) = value.toNoLeadingZeroBytes().let { write(it); it.size }
+fun ByteBuffer.putNaturalNoLeadingZero(value: NaturalBigInteger) =
+    putNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+
+fun ByteBuffer.putNaturalNoLeadingZero(value: Long) = putNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+fun ByteBuffer.putNaturalNoLeadingZero(value: Int) = putNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+fun ByteBuffer.putNaturalNoLeadingZero(value: Short) = putNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+
+private inline fun ByteBuffer.putNoLead0Tmpl(toNoLead0Bas: () -> ByteArraySlice) = wOpTmpl(toNoLead0Bas, ::put)
+
+// To write into output stream
+
+fun OutputStream.writeNaturalNoLeadingZero(value: NaturalBigInteger) =
+    writeNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+
+fun OutputStream.writeNaturalNoLeadingZero(value: Long): Int =
+    writeNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+
+fun OutputStream.writeNaturalNoLeadingZero(value: Int) = writeNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+
+fun OutputStream.writeNaturalNoLeadingZero(value: Short) = writeNoLead0Tmpl(value::naturalToNoLeadingZeroByteArraySlice)
+
+private inline fun OutputStream.writeNoLead0Tmpl(toNoLead0Bas: () -> ByteArraySlice) = wOpTmpl(toNoLead0Bas, ::write)
+
+private inline fun wOpTmpl(toBas: () -> ByteArraySlice, writer: (ByteArraySlice) -> Unit): Int {
+    val bas = toBas()
+    writer(bas)
+    return bas.length
+}

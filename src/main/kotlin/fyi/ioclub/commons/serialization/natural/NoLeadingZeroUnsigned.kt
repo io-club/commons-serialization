@@ -12,26 +12,30 @@
 
 package fyi.ioclub.commons.serialization.natural
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: ULong, off: Int = 0) = putNoLeadingZero(value.toLong(), off)
+import fyi.ioclub.commons.datamodel.array.slice.ByteArraySlice
+import java.io.OutputStream
+import java.nio.ByteBuffer
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: UInt, off: Int = 0) = putNoLeadingZero(value.toInt(), off)
+fun ByteArraySlice.putNaturalNoLeadingZero(value: ULong) = putNaturalNoLeadingZero(value.toLong())
+fun ByteArraySlice.putNaturalNoLeadingZero(value: UInt) = putNaturalNoLeadingZero(value.toInt())
+fun ByteArraySlice.putNaturalNoLeadingZero(value: UShort) = putNaturalNoLeadingZero(value.toShort())
 
-@JvmOverloads
-fun ByteArray.putNoLeadingZero(value: UShort, off: Int = 0) = putNoLeadingZero(value.toShort(), off)
+fun ULong.toNoLeadingZero(destination: ByteArraySlice) = toLong().toNoLeadingZero(destination)
+fun UInt.toNoLeadingZero(destination: ByteArraySlice) = toInt().toNoLeadingZero(destination)
+fun UShort.toNoLeadingZero(destination: ByteArraySlice) = toShort().toNoLeadingZero(destination)
 
-@JvmOverloads
-fun ULong.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = toLong().toNoLeadingZeroBytes(dst, off)
+fun ULong.toNoLeadingZeroByteArray() = toLong().toNoLeadingZeroByteArray()
+fun UInt.toNoLeadingZeroByteArray() = toInt().toNoLeadingZeroByteArray()
+fun UShort.toNoLeadingZeroByteArray() = toShort().toNoLeadingZeroByteArray()
 
-@JvmOverloads
-fun UInt.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = toInt().toNoLeadingZeroBytes(dst, off)
+fun ULong.naturalToNoLeadingZeroByteArraySlice() = toLong().naturalToNoLeadingZeroByteArraySlice()
+fun UInt.naturalToNoLeadingZeroByteArraySlice() = toInt().naturalToNoLeadingZeroByteArraySlice()
+fun UShort.naturalToNoLeadingZeroByteArraySlice() = toShort().naturalToNoLeadingZeroByteArraySlice()
 
-@JvmOverloads
-fun UShort.toNoLeadingZeroBytes(dst: ByteArray, off: Int = 0) = toShort().toNoLeadingZeroBytes(dst, off)
-fun ULong.toNoLeadingZeroBytes() = toLong().toNoLeadingZeroBytes()
-fun UInt.toNoLeadingZeroBytes() = toInt().toNoLeadingZeroBytes()
-fun UShort.toNoLeadingZeroBytes() = toShort().toNoLeadingZeroBytes()
-val ULong.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
-val UInt.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
-val UShort.noLeadingZeroBytes get() = toNoLeadingZeroBytes()
+fun ByteBuffer.putNaturalNoLeadingZero(value: ULong) = putNaturalNoLeadingZero(value.toLong())
+fun ByteBuffer.putNaturalNoLeadingZero(value: UInt) = putNaturalNoLeadingZero(value.toInt())
+fun ByteBuffer.putNaturalNoLeadingZero(value: UShort) = putNaturalNoLeadingZero(value.toShort())
+
+fun OutputStream.writeNaturalNoLeadingZero(value: ULong) = writeNaturalNoLeadingZero(value.toLong())
+fun OutputStream.writeNaturalNoLeadingZero(value: UInt) = writeNaturalNoLeadingZero(value.toInt())
+fun OutputStream.writeNaturalNoLeadingZero(value: UShort) = writeNaturalNoLeadingZero(value.toShort())

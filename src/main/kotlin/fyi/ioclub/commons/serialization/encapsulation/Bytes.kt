@@ -10,243 +10,169 @@
 
 package fyi.ioclub.commons.serialization.encapsulation
 
+import fyi.ioclub.commons.datamodel.array.concat.concat
+import fyi.ioclub.commons.datamodel.array.slice.*
+import fyi.ioclub.commons.datamodel.container.Container
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
-fun ByteArray.encapsulateToList(): List<ByteArray> = listOf(size.naturalEncapsulateToCompressed(), this)
+// Writing operations for data encapsulation
 
 /**
- * Write the size of data and the data to the byte array.
+ * Copies [source] data length and data value to
+ * position [ByteArraySlice.offset] of destination [ByteArraySlice.array].
  *
- * @param off    destination offset
- * @param src    source byte array
- * @param srcOff source offset
- * @param srcLen source length
+ * @return the number of bytes written
+ *
+ * @throws IndexOutOfBoundsException if source length greater than destination length
+ */
+fun ByteArraySlice.putEncapsulated(source: ByteArraySlice) = wOpEncTmplWithOff(source, ::putNaturalEncapsulated)
+{ src, off -> src.copyInto(this.asSliceFrom(off)) }
+
+/**
+ * Copies [source] data length and data value to [this] destination buffer.
+ *
  * @return the number of bytes written
  */
-fun ByteArray.encapsulate(off: Int, src: ByteArray, srcOff: Int, srcLen: Int): Int =
-    encapsulateNaturalCompressed(srcLen, off).let {
-        System.arraycopy(src, srcOff, this, off + it, srcLen)
-        it + srcLen
-    }
+fun ByteBuffer.putEncapsulated(source: ByteArraySlice) = wOpEncTmpl(source, ::putNaturalEncapsulated, ::put)
 
 /**
- * Write the size of data and the data to the byte array.
+ * Copies [source] data length and data value to [this] destination output stream.
  *
- * @param off    destination offset
- * @param src    source byte array
- * @param srcLen source length
  * @return the number of bytes written
  */
-@JvmOverloads
-fun ByteArray.encapsulate(off: Int, src: ByteArray, srcLen: Int = src.size) = encapsulate(off, src, 0, srcLen)
+fun OutputStream.writeEncapsulated(source: ByteArraySlice) = wOpEncTmpl(source, ::writeNaturalEncapsulated, ::write)
 
-/**
- * Write the size of data and the data to the byte array.
- *
- * @param src    source byte array
- * @param srcOff source offset
- * @param srcLen source length
- * @return the number of bytes written
- */
-fun ByteArray.encapsulate(src: ByteArray, srcOff: Int, srcLen: Int) = encapsulate(0, src, srcOff, srcLen)
+private inline fun wOpEncTmpl(
+    src: ByteArraySlice, wOpNEnc: (n: Int) -> Int, wOpBas: (ByteArraySlice) -> Unit
+) = wOpEncTmplWithOff(src, wOpNEnc) { bas, _ -> wOpBas(bas) }
 
-/**
- * Write the size of data and the data to the byte array.
- *
- * @param src    source byte array
- * @param srcLen source length
- * @return the number of bytes written
- */
-fun ByteArray.encapsulate(src: ByteArray, srcLen: Int = src.size) = encapsulate(src, 0, srcLen)
-
-/**
- * Write the size of data and the data to the byte buffer.
- *
- * @param src    source byte array
- * @param srcOff source offset
- * @param srcLen length
- * @return the number of bytes written
- */
-fun ByteBuffer.encapsulate(src: ByteArray, srcOff: Int, srcLen: Int) =
-    encapsulateNaturalCompressed(srcLen).let { put(src, srcOff, srcLen); it + srcLen }
-
-/**
- * Write the size of data and the data to the byte buffer.
- *
- * @param src    source byte array
- * @param srcLen length
- * @return the number of bytes written
- */
-@JvmOverloads
-fun ByteBuffer.encapsulate(src: ByteArray, srcLen: Int = src.size) = encapsulate(src, 0, srcLen)
-
-/**
- * Write the size of data and the data to the output stream.
- *
- * @param src    source byte array
- * @param srcOff source offset
- * @param srcLen length
- * @return the number of bytes written
- */
-fun OutputStream.encapsulate(src: ByteArray, srcOff: Int, srcLen: Int) =
-    encapsulateNaturalCompressed(srcLen).let { write(src, srcOff, srcLen); it + srcLen }
-
-/**
- * Write the size of data and the data to the output stream.
- *
- * @param src    source byte array
- * @param srcLen length
- * @return the number of bytes written
- */
-fun OutputStream.encapsulate(src: ByteArray, srcLen: Int = src.size): Int = encapsulate(src, 0, srcLen)
-
-/**
- * Write the size of data and the data to a byte array.
- *
- * @param off    source offset
- * @param len    source length
- * @param dst    destination byte array
- * @param dstOff destination offset
- * @return the number of bytes written
- */
-@JvmOverloads
-fun ByteArray.encapsulateToBytes(off: Int, len: Int, dst: ByteArray, dstOff: Int = 0) =
-    dst.encapsulate(dstOff, this, off, len)
-
-/**
- * Write data size and data to byte array.
- *
- * @param len    source length
- * @param dst    destination byte array
- * @param dstOff destination offset
- * @return the number of bytes written
- */
-@JvmOverloads
-fun ByteArray.encapsulateToBytes(len: Int, dst: ByteArray, dstOff: Int = 0) = encapsulateToBytes(0, len, dst, dstOff)
-
-/**
- * Write the size of data and the data to a byte array.
- *
- * @param dst    destination byte array
- * @param dstOff destination offset
- * @return the number of bytes written
- */
-@JvmOverloads
-fun ByteArray.encapsulateToBytes(dst: ByteArray, dstOff: Int = 0) = encapsulateToBytes(size, dst, dstOff)
-
-/**
- * Write the size of data and the data to a byte buffer.
- *
- * @param off    source offset
- * @param len    source length
- * @param dst    destination byte buffer
- * @return the number of bytes written
- */
-fun ByteArray.encapsulateToBytes(off: Int, len: Int, dst: ByteBuffer) = dst.encapsulate(this, off, len)
-
-/**
- * Write the size of data and the data to a byte buffer.
- *
- * @param len    source length
- * @param dst    destination byte buffer
- * @return the number of bytes written
- */
-fun ByteArray.encapsulateToBytes(len: Int, dst: ByteBuffer) = encapsulateToBytes(0, len, dst)
-
-/**
- * Write the size of data and the data to a byte buffer.
- *
- * @param dst    destination byte buffer
- * @return the number of bytes written
- */
-fun ByteArray.encapsulateToBytes(dst: ByteBuffer) = encapsulateToBytes(size, dst)
-
-/**
- * Write the size of data and the data to an output stream.
- *
- * @param off    source offset
- * @param len    source length
- * @param dst    destination output stream
- * @return the number of bytes written
- */
-fun ByteArray.encapsulateToBytes(off: Int, len: Int, dst: OutputStream) = dst.encapsulate(this, off, len)
-
-/**
- * Write the size of data and the data to an output stream.
- *
- * @param len    source length
- * @param dst    destination output stream
- * @return the number of bytes written
- */
-fun ByteArray.encapsulateToBytes(len: Int, dst: OutputStream) = encapsulateToBytes(0, len, dst)
-
-/**
- * Write the size of data and the data to an output stream.
- *
- * @param dst    destination output stream
- * @return the number of bytes written
- */
-fun ByteArray.encapsulateToBytes(dst: OutputStream) = encapsulateToBytes(size, dst)
-
-/**
- * Write the size of data and the data to a byte array.
- *
- * @param off source position
- * @param len length
- * @return the result byte array
- */
-fun ByteArray.encapsulateToBytes(off: Int, len: Int): ByteArray {
-    val src0 = len.naturalEncapsulateToCompressed()
-    val len0 = src0.size
-    return ByteArray(len0 + len).also {
-        System.arraycopy(src0, 0, it, 0, len0)
-        System.arraycopy(this, off, it, len0, len)
-    }
+private inline fun wOpEncTmplWithOff(
+    src: ByteArraySlice, wOpNEnc: (n: Int) -> Int, wOpBasWithOff: (ByteArraySlice, off: Int) -> Unit
+): Int {
+    val srcLen = src.length
+    val len0 = wOpNEnc(srcLen)
+    wOpBasWithOff(src, len0)
+    return len0 + srcLen
 }
 
 /**
- * Write the size of data and the data to a byte array.
+ * Copies [this] data length and data value to position [offset] of [destination] array.
  *
- * @param len length
+ * @return the number of bytes written
+ */
+fun ByteArraySlice.encapsulateTo(destination: ByteArraySlice) = let(destination::putEncapsulated)
+
+/**
+ * Copies [this] data length and data value to [destination] buffer.
+ *
+ * @return the number of bytes written
+ */
+fun ByteArraySlice.encapsulateTo(destination: ByteBuffer): Int = let(destination::putEncapsulated)
+
+/**
+ * Copies [this] data length and data value to [destination] output stream.
+ *
+ * @return the number of bytes written
+ */
+fun ByteArraySlice.encapsulateTo(destination: OutputStream): Int = let(destination::writeEncapsulated)
+
+/**
+ * Creates a [ByteArray] and copies [this] data length and data value to it.
+ *
+ * @return the result [ByteArray]
+ */
+fun ByteArraySlice.encapsulateToByteArray(): ByteArray = concat(encapsulateToByteArraySliceList())
+
+/**
+ * Creates a [List] of [ByteArraySlice],
+ * containing data length [ByteArraySlice.length] and data value [this].
+ *
+ * @return the result [List]
+ */
+fun ByteArraySlice.encapsulateToByteArraySliceList(): List<ByteArraySlice> {
+    val fieldLen = length.naturalEncapsulateToByteArraySliceList()
+    return fieldLen + this
+}
+
+/**
+ * Creates a [List] of [ByteArray],
+ * containing data length [ByteArray.size] and data value [this].
+ *
+ * @return the result [List]
+ */
+fun ByteArray.encapsulateToByteArrayList(): List<ByteArray> = listOf(size.naturalEncapsulateToByteArray(), this)
+
+// Reading operations for data encapsulation
+
+/**
+ * Reads encapsulated data value from [this] buffer
+ * by data length specified by [getEncapsulatedNaturalInt] in buffer
+ * to position [ByteArraySlice.offset] of [ByteArraySlice.array] of [destination].
+ *
+ * @return data length
+ * @throws java.nio.BufferUnderflowException If there are bytes fewer than data length
+ * remaining in this buffer.
+ * @throws IndexOutOfBoundsException If data length is greater than [destination] length.
+ */
+fun ByteBuffer.getEncapsulated(destination: ByteArraySlice): Int =
+    getEncapsulatedNaturalInt().apply { let(destination::asSliceTo).also(::get) }
+
+/**
+ * Reads encapsulated data value from [this] input stream
+ * by data length specified in input stream
+ * to position [ByteArraySlice.offset] of [ByteArraySlice.array] of [destination].
+ *
+ * @return data length
+ * @throws java.io.IOException if the first byte cannot be read for any reason
+ * other than end of file, or if the input stream has been closed,
+ * or if some other I/O error occurs.
+ * @throws IndexOutOfBoundsException if data length is greater than [destination] length.
+ */
+fun InputStream.readEncapsulated(destination: ByteArraySlice): Int =
+    readEncapsulatedNaturalInt().apply { let(destination::asSliceTo).also(::read) }
+
+fun Container.Mutable<ByteArraySlice>.getEncapsulatedByteArray(): ByteArray {
+    val len = getEncapsulatedNaturalInt()
+    val arr = ByteArray(len)
+    val src = item
+    src.asSliceTo(len).copyInto(arr.asSlice())
+    item = src.asSliceFrom(len)
+    return arr
+}
+
+/**
+ * Creates a [ByteArray] of size equals data length
+ * specified in [this] buffer,
+ * and copies data value from buffer to it.
+ *
  * @return the result byte array
+ * @throws java.nio.BufferUnderflowException If there are bytes fewer than data length
+ * remaining in this buffer.
  */
-@JvmOverloads
-fun ByteArray.encapsulateToBytes(len: Int = size) = encapsulateToBytes(0, size)
+fun ByteBuffer.getEncapsulatedByteArray(): ByteArray = getEncapsulatedNaturalInt().let(::ByteArray).also(::get)
 
 /**
- * Read packed data from buffer by its size indicated in the byte buffer.
+ * Creates a [ByteArray] of size equals data length
+ * specified in [this] input stream,
+ * and copies data value from input stream to it.
  *
- * @param dst    destination array
- * @param dstOff destination offset
- * @return the number of bytes written
+ * @return the result byte array
+ * @throws java.io.IOException if the first byte cannot be read for any reason
+ * other than end of file, or if the input stream has been closed,
+ * or if some other I/O error occurs.
  */
-@JvmOverloads
-fun ByteBuffer.unencapsulate(dst: ByteArray, dstOff: Int = 0) =
-    ByteArray(unencapsulateInt()).also { get(dst, dstOff, it.size) }
+fun InputStream.readEncapsulatedByteArray(): ByteArray = readEncapsulatedNaturalInt().let(::ByteArray).also(::read)
 
-/**
- * Read packed data from buffer by its size indicated in the input stream.
- *
- * @param dst    destination array
- * @param dstOff destination offset
- * @return the number of bytes written
- */
-@JvmOverloads
-fun InputStream.unencapsulate(dst: ByteArray, dstOff: Int = 0) =
-    ByteArray(unencapsulateInt()).also { read(dst, dstOff, it.size) }
+fun Container.Mutable<ByteArraySlice>.getEncapsulatedByteArraySlice(): ByteArraySlice {
+    val len = getEncapsulatedNaturalInt()
+    val src = item
+    val data = src.asSliceTo(len)
+    item = src.asSliceFrom(len)
+    return data
+}
 
-/**
- * Read packed data from buffer by its size indicated in the byte buffer.
- *
- * @return the result bytes
- */
-fun ByteBuffer.unencapsulate() = ByteArray(unencapsulateInt()).also(::get)
+fun ByteBuffer.getEncapsulatedByteArraySlice(): ByteArraySlice = getEncapsulatedNaturalInt().let(::getArraySlice)
 
-/**
- * Read packed data from buffer by its size indicated in the input stream.
- *
- * @return the result bytes
- */
-fun InputStream.unencapsulate() = ByteArray(unencapsulateInt()).also(::read)
+fun InputStream.readEncapsulatedByteArraySlice(): ByteArraySlice = readEncapsulatedNaturalInt().let(::readArraySlice)
