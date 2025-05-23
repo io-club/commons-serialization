@@ -12,217 +12,188 @@
 
 package fyi.ioclub.commons.serialization.natural
 
+import fyi.ioclub.commons.datamodel.array.iterator.iterateInReverse
+import fyi.ioclub.commons.datamodel.array.slice.*
 import java.io.InputStream
 import java.io.OutputStream
-import java.math.BigInteger
-import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
-import java.util.*
 
+fun ByteArraySlice.toNaturalBigInteger(): NaturalBigInteger = let(::NaturalBigInteger)
 
-private const val BIG_INTEGER_POSITIVE = 1
+fun ByteArraySlice.toNaturalLong(): Long =
+    toNPriTmpl(LONG_0) { value, ub, shrBits -> value + ub.toLong() shl shrBits }
 
-@JvmOverloads
-fun ByteArray.getNaturalBigInteger(len: Int = size) = getNaturalBigInteger(0, len)
-fun ByteArray.getNaturalBigInteger(off: Int, len: Int) = BigInteger(BIG_INTEGER_POSITIVE, this, off, len)
+fun ByteArraySlice.toNaturalInt(): Int =
+    toNPriTmpl(INT_0) { value, ub, shrBits -> value + ub.toInt() shl shrBits }
 
-private inline fun <reified T> ByteArray.getNaturalBasic(
-    off: Int,
-    len: Int,
-    initVal: T,
-    plusAndShl: (T, UByte, Int) -> T
-): T {
-    var j = (if (off >= 0) off else size + off).also { Objects.checkFromIndexSize(it, len, size) } + len
-    var value = initVal
-    for (i in 0..<len * Byte.SIZE_BITS step Byte.SIZE_BITS) value = plusAndShl(value, get(--j).toUByte(), i)
-    return value
+fun ByteArraySlice.toNaturalShort(): Short =
+    toNPriTmpl(SHORT_0) { value, ub, shrBits -> (value + ub.toInt() shl shrBits).toShort() }
+
+fun ByteArraySlice.toNaturalByte(): Byte =
+    toNPriTmpl(BYTE_0) { value, ub, shrBits -> (value + ub.toInt() shl shrBits).toByte() }
+
+/** For [ByteArraySlice.toNaturalLong] to [ByteArraySlice.toNaturalByte], */
+private inline fun <T> ByteArraySlice.toNPriTmpl(initVal: T, plusAndShl: (T, UByte, Int) -> T): T {
+    val arr = array
+    var j = endArrayIndexExclusive
+    val iProgress = (0..<length * Byte.SIZE_BITS step Byte.SIZE_BITS)
+    return iProgress.fold(initVal) { value, i -> plusAndShl(value, arr[--j].toUByte(), i) }
 }
 
-@JvmOverloads
-fun ByteArray.getNaturalLong(len: Int = size) = getNaturalLong(0, len)
-fun ByteArray.getNaturalLong(off: Int, len: Int) =
-    getNaturalBasic(off, len, 0L) { value, ub, shrBits -> value + ub.toLong() shl shrBits }
+fun ByteBuffer.getNaturalBigInteger(length: Int) = getNTmpl(length, ByteArraySlice::toNaturalBigInteger)
+fun ByteBuffer.getNaturalLong(length: Int = Long.SIZE_BYTES) = getNTmpl(length, ByteArraySlice::toNaturalLong)
+fun ByteBuffer.getNaturalInt(length: Int = Int.SIZE_BYTES) = getNTmpl(length, ByteArraySlice::toNaturalInt)
+fun ByteBuffer.getNaturalShort(length: Int = Short.SIZE_BYTES) = getNTmpl(length, ByteArraySlice::toNaturalShort)
+fun ByteBuffer.getNaturalByte(length: Int = Byte.SIZE_BYTES) = getNTmpl(length, ByteArraySlice::toNaturalByte)
 
-@JvmOverloads
-fun ByteArray.getNaturalInt(len: Int = size) = getNaturalInt(0, len)
-fun ByteArray.getNaturalInt(off: Int, len: Int) =
-    getNaturalBasic(off, len, 0) { value, ub, shrBits -> value + ub.toInt() shl shrBits }
+/** For [ByteBuffer.getNaturalBigInteger] to [ByteBuffer.getNaturalByte]. */
+private inline fun <T> ByteBuffer.getNTmpl(length: Int, basToN: ByteArraySlice.() -> T): T =
+    basToN(getArraySlice(length))
 
-@JvmOverloads
-fun ByteArray.getNaturalShort(len: Int = 0) = getNaturalShort(0, len)
-fun ByteArray.getNaturalShort(off: Int, len: Int) =
-    getNaturalBasic<Short>(off, len, 0) { value, ub, shrBits -> (value + ub.toInt() shl shrBits).toShort() }
+fun InputStream.readNaturalBigInteger(length: Int) = readNTmpl(length, ByteArraySlice::toNaturalBigInteger)
+fun InputStream.readNaturalLong(length: Int = Long.SIZE_BYTES) = readNTmpl(length, ByteArraySlice::toNaturalLong)
+fun InputStream.readNaturalInt(length: Int = Int.SIZE_BYTES) = readNTmpl(length, ByteArraySlice::toNaturalInt)
+fun InputStream.readNaturalShort(length: Int = Short.SIZE_BYTES) = readNTmpl(length, ByteArraySlice::toNaturalShort)
+fun InputStream.readNaturalByte(length: Int = Byte.SIZE_BYTES) = readNTmpl(length, ByteArraySlice::toNaturalByte)
 
-@JvmOverloads
-fun ByteArray.getNaturalByte(len: Int = 0) = getNaturalByte(0, len)
-fun ByteArray.getNaturalByte(off: Int, len: Int) =
-    getNaturalBasic<Byte>(off, len, 0) { value, ub, shrBits -> (value + ub.toInt() shl shrBits).toByte() }
-
-private inline fun <reified T> ByteBuffer.getNaturalTemplate(
-    len: Int,
-    byteArrayToNatural: ByteArray.(Int, Int) -> T
-): T {
-    val pos = position()
-    if (len > limit() - pos) throw BufferUnderflowException()
-    position(pos + len)
-    return byteArrayToNatural(array(), pos, len)
-}
-
-@JvmOverloads
-fun ByteBuffer.getNaturalBigInteger(len: Int = remaining()) = getNaturalTemplate(len, ByteArray::getNaturalBigInteger)
-
-@JvmOverloads
-fun ByteBuffer.getNaturalLong(len: Int = remaining()) = getNaturalTemplate(len, ByteArray::getNaturalLong)
-
-@JvmOverloads
-fun ByteBuffer.getNaturalInt(len: Int = remaining()) = getNaturalTemplate(len, ByteArray::getNaturalInt)
-
-@JvmOverloads
-fun ByteBuffer.getNaturalShort(len: Int = remaining()) = getNaturalTemplate(len, ByteArray::getNaturalShort)
-
-@JvmOverloads
-fun ByteBuffer.getNaturalByte(len: Int = remaining()) = getNaturalTemplate(len, ByteArray::getNaturalByte)
-
-private inline fun <reified T> InputStream.readNaturalTemplate(len: Int, byteArrayToNatural: (ByteArray) -> T) =
-    byteArrayToNatural(ByteArray(len).also { read(it) })
-
-@JvmOverloads
-fun InputStream.readNaturalBigInteger(len: Int = available()) =
-    readNaturalTemplate(len, ByteArray::getNaturalBigInteger)
-
-@JvmOverloads
-fun InputStream.readNaturalLong(len: Int = available()) = readNaturalTemplate(len, ByteArray::getNaturalLong)
-
-@JvmOverloads
-fun InputStream.readNaturalInt(len: Int = available()) = readNaturalTemplate(len, ByteArray::getNaturalInt)
-
-@JvmOverloads
-fun InputStream.readNaturalShort(len: Int = available()) = readNaturalTemplate(len, ByteArray::getNaturalShort)
-
-@JvmOverloads
-fun InputStream.readNaturalByte(len: Int = available()) = readNaturalTemplate(len, ByteArray::getNaturalByte)
+/** For [InputStream.readNaturalBigInteger] to [InputStream.readNaturalByte]. */
+private inline fun <reified T> InputStream.readNTmpl(len: Int, basToN: ByteArraySlice.() -> T): T =
+    readArraySlice(len).basToN()
 
 // To put non-negative integers
 
-internal const val ZERO_BYTE: Byte = 0
+// `ByteArraySlice.putNatural(value: T, length: Int)`, `T` for integral type
 
-@JvmOverloads
-fun ByteArray.putNatural(value: BigInteger, len: Int = size) = putNatural(value, 0, len)
-fun ByteArray.putNatural(value: BigInteger, off: Int, len: Int) {
-    val src = value.toByteArray()
-    val srcOff = if (src[0] == ZERO_BYTE) 0 else 1
-    val srcLen = src.size - srcOff
-    System.arraycopy(src, srcOff, this, off + len - srcLen, srcLen)
+/**
+ * Like reading operations for [NaturalBigInteger],
+ * no choice of [NATURAL_BIG_INTEGER_AUTO_LEAST_LENGTH] as length.
+ *
+ * For such objective, use [ByteArraySlice.putNaturalNoLeadingZero] instead.
+ */
+fun ByteArraySlice.putNatural(value: NaturalBigInteger): Int {
+    requireNatural(value)
+    val srcArr = value.toByteArray()
+    val srcNon0From = if (srcArr[0] == BYTE_0) 0 else 1
+    val non0Src = srcArr.asSliceFrom(srcNon0From)
+    val dstLen = this.length
+    val dstNon0From = dstLen - non0Src.length
+    asSliceTo(dstNon0From).fill(BYTE_0)
+    non0Src.copyInto(asSliceFrom(dstNon0From))
+    return dstLen
 }
 
-private inline fun <reified T> ByteArray.putNaturalBasic(value: T, off: Int, len: Int, shrToByte: (T, Int) -> Byte) {
-    var j = off + len
-    for (i in 0..<len * 8 step Byte.SIZE_BITS) this[--j] = shrToByte(value, i)
+fun ByteArraySlice.putNatural(value: Long): Int = putNTmpl(value) { value, shrBits -> (value ushr shrBits).toByte() }
+fun ByteArraySlice.putNatural(value: Int): Int = putNTmpl(value) { value, shrBits -> (value ushr shrBits).toByte() }
+fun ByteArraySlice.putNatural(value: Short): Int = putNatural(value.toInt())
+fun ByteArraySlice.putNatural(value: Byte): Int = fillBasTmpl {
+    val lead0To = endArrayIndexInclusive
+    array[lead0To] = value
+    lead0To
 }
 
-@JvmOverloads
-fun ByteArray.putNatural(value: Long, len: Int = size) = putNatural(value, 0, len)
-fun ByteArray.putNatural(value: Long, off: Int, len: Int) =
-    putNaturalBasic(value, off, len) { value, shrBits -> (value ushr shrBits).toByte() }
+/** For [ByteArraySlice.putNatural]. */
+private inline fun <T> ByteArraySlice.putNTmpl(value: T, shrToByte: (T, Int) -> Byte) = fillBasTmpl {
+    arrayIterator(endArrayIndexExclusive).iterateInReverse().run {
+        Iterable { this }.forEachIndexed { i, _ -> set(shrToByte(value, i * Byte.SIZE_BITS)) }
+        previousIndex()
+    }
+}
 
-@JvmOverloads
-fun ByteArray.putNatural(value: Int, len: Int = size) = putNatural(value, 0, len)
-fun ByteArray.putNatural(value: Int, off: Int, len: Int) =
-    putNaturalBasic(value, off, len) { value, shrBits -> (value ushr shrBits).toByte() }
+/** @param fillAfterLead0 returns array index. */
+private inline fun ByteArraySlice.fillBasTmpl(fillAfterLead0: () -> Int): Int {
+    val lead0To = fillAfterLead0()
+    array.asSliceFrom(offset, lead0To).fill(BYTE_0)
+    return length
+}
 
-@JvmOverloads
-fun ByteArray.putNatural(value: Short, len: Int = size) = putNatural(value, 0, len)
-fun ByteArray.putNatural(value: Short, off: Int, len: Int) = putNatural(value.toInt(), off, len)
+// `ByteBuffer.putNatural(value: T, length: Int)`, `T` for integral type
 
-@JvmOverloads
-fun ByteArray.putNatural(value: Byte, len: Int = size) = putNatural(value, 0, len)
-fun ByteArray.putNatural(value: Byte, off: Int, len: Int) { this[off + len - 1] = value }
+fun ByteBuffer.putNatural(value: NaturalBigInteger, length: Int = AUTO) = writingOpNTmpl(value, length, ::put)
 
-private inline fun <reified T> writeNaturalTemplate(
-    value: T,
-    len: Int,
-    naturalPutter: ByteArray.(T) -> Unit,
-    writer: (ByteArray) -> Unit,
-) = writer(ByteArray(len).also { it.naturalPutter(value) })
+fun ByteBuffer.putNatural(value: Long, length: Int = Long.SIZE_BYTES) =
+    putNTmpl(value, length, ByteArraySlice::putNatural)
 
-private inline fun <reified T> ByteBuffer.putNaturalTemplate(
-    value: T,
-    len: Int,
-    naturalPutter: (ByteArray, T) -> Unit
-) =
-    writeNaturalTemplate(value, len, naturalPutter, ::put)
+fun ByteBuffer.putNatural(value: Int, length: Int = Int.SIZE_BYTES) =
+    putNTmpl(value, length, ByteArraySlice::putNatural)
 
-@JvmOverloads
-fun ByteBuffer.putNatural(value: BigInteger, len: Int = remaining()) =
-    putNaturalTemplate(value, len, ByteArray::putNatural)
+fun ByteBuffer.putNatural(value: Short, length: Int = Short.SIZE_BYTES) =
+    putNTmpl(value, length, ByteArraySlice::putNatural)
 
-@JvmOverloads
-fun ByteBuffer.putNatural(value: Long, len: Int = remaining()) = putNaturalTemplate(value, len, ByteArray::putNatural)
+fun ByteBuffer.putNatural(value: Byte, length: Int = Byte.SIZE_BYTES) =
+    putNTmpl(value, length, ByteArraySlice::putNatural)
 
-@JvmOverloads
-fun ByteBuffer.putNatural(value: Int, len: Int = remaining()) = putNaturalTemplate(value, len, ByteArray::putNatural)
+/** For [ByteBuffer.putNatural]. */
+private inline fun <T> ByteBuffer.putNTmpl(value: T, len: Int, putN: ByteArraySlice.(T) -> Unit): Int =
+    writingOpNTmpl(value, len, putN, ::put)
 
-@JvmOverloads
-fun ByteBuffer.putNatural(value: Short, len: Int = remaining()) = putNaturalTemplate(value, len, ByteArray::putNatural)
+// `OutputStream.writeNatural(value: T,  length: Int): Int`, `T` for integral type
 
-@JvmOverloads
-fun ByteBuffer.putNatural(value: Byte, len: Int = remaining()) = putNaturalTemplate(value, len, ByteArray::putNatural)
+fun OutputStream.writeNatural(value: NaturalBigInteger, length: Int = AUTO): Int =
+    writingOpNTmpl(value, length, ::write)
 
-private inline fun <reified T> OutputStream.putNaturalTemplate(
-    value: T,
-    len: Int,
-    naturalPutter: ByteArray.(T) -> Unit
-) =
-    writeNaturalTemplate(value, len, naturalPutter, ::write)
+fun OutputStream.writeNatural(value: Long, length: Int = Long.SIZE_BYTES) =
+    writeNTmpl(value, length, ByteArraySlice::putNatural)
 
-fun OutputStream.writeNatural(value: BigInteger, len: Int) = putNaturalTemplate(value, len, ByteArray::putNatural)
-fun OutputStream.writeNatural(value: Long, len: Int) = putNaturalTemplate(value, len, ByteArray::putNatural)
-fun OutputStream.writeNatural(value: Int, len: Int) = putNaturalTemplate(value, len, ByteArray::putNatural)
-fun OutputStream.writeNatural(value: Short, len: Int) = putNaturalTemplate(value, len, ByteArray::putNatural)
-fun OutputStream.writeNatural(value: Byte, len: Int) = putNaturalTemplate(value, len, ByteArray::putNatural)
+fun OutputStream.writeNatural(value: Int, length: Int = Int.SIZE_BYTES) =
+    writeNTmpl(value, length, ByteArraySlice::putNatural)
 
-@JvmOverloads
-fun BigInteger.naturalToBytes(dst: ByteArray, len: Int = dst.size) = naturalToBytes(dst, 0, len)
-fun BigInteger.naturalToBytes(dst: ByteArray, off: Int, len: Int) = dst.putNatural(this, off, len)
+fun OutputStream.writeNatural(value: Short, length: Int = Short.SIZE_BYTES) =
+    writeNTmpl(value, length, ByteArraySlice::putNatural)
 
-@JvmOverloads
-fun Long.naturalToBytes(dst: ByteArray, len: Int = dst.size) = naturalToBytes(dst, 0, len)
-fun Long.naturalToBytes(dst: ByteArray, off: Int, len: Int) = dst.putNatural(this, off, len)
+fun OutputStream.writeNatural(value: Byte, length: Int = Byte.SIZE_BYTES) =
+    writeNTmpl(value, length, ByteArraySlice::putNatural)
 
-@JvmOverloads
-fun Int.naturalToBytes(dst: ByteArray, len: Int = 0) = naturalToBytes(dst, 0, len)
-fun Int.naturalToBytes(dst: ByteArray, off: Int, len: Int) = dst.putNatural(this, off, len)
+/** For [OutputStream.writeNatural]. */
+private inline fun <T> OutputStream.writeNTmpl(value: T, len: Int, putN: ByteArraySlice.(T) -> Unit): Int =
+    writingOpNTmpl(value, len, putN, ::write)
 
-@JvmOverloads
-fun Short.naturalToBytes(dst: ByteArray, len: Int = dst.size) = naturalToBytes(dst, 0, len)
-fun Short.naturalToBytes(dst: ByteArray, off: Int, len: Int) = dst.putNatural(this, off, len)
+/** For [ByteBuffer.putNatural] and [OutputStream.writeNatural] for [NaturalBigInteger]. */
+private inline fun writingOpNTmpl(value: NaturalBigInteger, len: Int, writeBas: (ByteArraySlice) -> Unit): Int {
+    requireNatural(value)
+    val bas = if (len == AUTO) value.naturalToByteArraySlice()
+    else ByteArray(len).asSlice().also { dst -> dst.putNatural(value) }
+    writeBas(bas)
+    return bas.length
+}
 
-@JvmOverloads
-fun Byte.naturalToBytes(dst: ByteArray, len: Int = dst.size) = naturalToBytes(dst, 0, len)
-fun Byte.naturalToBytes(dst: ByteArray, off: Int, len: Int) = dst.putNatural(this, off, len)
+/** For [ByteBuffer.putNTmpl] and [OutputStream.writeNTmpl]. */
+private inline fun <T> writingOpNTmpl(
+    value: T, len: Int, putN: ByteArraySlice.(T) -> Unit, writeBas: (ByteArraySlice) -> Unit,
+): Int {
+    val dst = ByteArray(len).asSlice()
+    dst.putN(value)
+    writeBas(dst)
+    return len
+}
 
-const val BIG_INTEGER_NATURAL_DEFAULT_SIZE = -1
+// `T.naturalToBytes(destination: ByteArraySlice,  length: Int): Int`, `T` for integral type
 
-fun BigInteger.naturalToBytes(len: Int = BIG_INTEGER_NATURAL_DEFAULT_SIZE): ByteArray =
-    if (len == BIG_INTEGER_NATURAL_DEFAULT_SIZE) {
-        val src = toByteArray()
-        if (src[0] != ZERO_BYTE) src
-        else {
-            val len = src.size - 1
-            ByteArray(len).also { System.arraycopy(src, 1, it, 0, len) }
-        }
-    } else ByteArray(len).also { naturalToBytes(it, len) }
+fun NaturalBigInteger.naturalTo(destination: ByteArraySlice) = let(destination::putNatural)
+fun Long.naturalTo(destination: ByteArraySlice) = let(destination::putNatural)
+fun Int.naturalTo(destination: ByteArraySlice) = let(destination::putNatural)
+fun Short.naturalTo(destination: ByteArraySlice) = let(destination::putNatural)
+fun Byte.naturalTo(destination: ByteArraySlice) = let(destination::putNatural)
 
-private inline fun naturalToBytesBasic(len: Int, toBytes: (ByteArray) -> Unit) = ByteArray(len).also { toBytes(it) }
+// `T.naturalToBytes(length: Int): ByteArray`, `T` for integral type
 
-@JvmOverloads
-fun Long.naturalToBytes(len: Int = Long.SIZE_BYTES) = naturalToBytesBasic(len, ::naturalToBytes)
+fun NaturalBigInteger.naturalToByteArray(length: Int = AUTO): ByteArray =
+    naturalToByteArraySlice(length).run { if (length == AUTO) toSlicedArray() else array }
 
-@JvmOverloads
-fun Int.naturalToBytes(len: Int = Int.SIZE_BYTES) = naturalToBytesBasic(len, ::naturalToBytes)
+fun Long.naturalToByteArray(length: Int = Long.SIZE_BYTES): ByteArray = naturalToByteArraySlice(length).array
+fun Int.naturalToByteArray(length: Int = Int.SIZE_BYTES): ByteArray = naturalToByteArraySlice(length).array
+fun Short.naturalToByteArray(length: Int = Short.SIZE_BYTES): ByteArray = naturalToByteArraySlice(length).array
+fun Byte.naturalToByteArray(length: Int = Byte.SIZE_BYTES): ByteArray = naturalToByteArraySlice(length).array
 
-@JvmOverloads
-fun Short.naturalToBytes(len: Int = Short.SIZE_BYTES) = naturalToBytesBasic(len, ::naturalToBytes)
+fun NaturalBigInteger.naturalToByteArraySlice(length: Int = AUTO): ByteArraySlice = with(let(::requireNatural)) {
+    if (length == AUTO) {
+        toByteArray().run { if (first() != BYTE_0) asSlice() else asSliceFrom(1) }
+    } else nToBasTmpl(length, ::naturalTo)
+}
 
-@JvmOverloads
-fun Byte.naturalToBytes(len: Int = Byte.SIZE_BYTES) = naturalToBytesBasic(len, ::naturalToBytes)
+fun Long.naturalToByteArraySlice(length: Int = Long.SIZE_BYTES): ByteArraySlice = nToBasTmpl(length, ::naturalTo)
+fun Int.naturalToByteArraySlice(length: Int = Int.SIZE_BYTES): ByteArraySlice = nToBasTmpl(length, ::naturalTo)
+fun Short.naturalToByteArraySlice(length: Int = Short.SIZE_BYTES): ByteArraySlice = nToBasTmpl(length, ::naturalTo)
+fun Byte.naturalToByteArraySlice(length: Int = Byte.SIZE_BYTES): ByteArraySlice = nToBasTmpl(length, ::naturalTo)
+
+private inline fun nToBasTmpl(length: Int, nTo: (ByteArraySlice) -> Unit): ByteArraySlice =
+    ByteArray(length).asSlice().also(nTo)

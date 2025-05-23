@@ -8,36 +8,27 @@
  * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    kotlin("jvm") version "2.1.0"
-    `maven-publish`
-}
+package fyi.ioclub.commons.serialization.natural
 
-group = "fyi.ioclub"
-version = "3.0.0-SNAPSHOT"
+import fyi.ioclub.commons.datamodel.array.slice.ByteArraySlice
+import java.math.BigInteger
 
-repositories {
-    mavenLocal()
-    maven { url = uri("https://maven.aliyun.com/repository/public") }
-    mavenCentral()
-}
+const val NATURAL_BIG_INTEGER_AUTO_LEAST_LENGTH = -1
 
-dependencies {
-    implementation("org.jetbrains:annotations:26.0.2")
-    implementation("fyi.ioclub:commons-datamodel:4.2.1-SNAPSHOT")
-    testImplementation(kotlin("test"))
-}
+internal const val AUTO = NATURAL_BIG_INTEGER_AUTO_LEAST_LENGTH
 
-tasks.test {
-    useJUnitPlatform()
-}
-kotlin {
-    jvmToolchain(17)
-}
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-        }
-    }
+internal const val LONG_0: Long = 0
+internal const val INT_0: Int = 0
+internal const val SHORT_0: Short = 0
+internal const val BYTE_0: Byte = 0
+
+/** Natural big integer. Whose [BigInteger.signum] returns `0` or `1`. */
+typealias NaturalBigInteger = BigInteger
+
+internal fun NaturalBigInteger(bas: ByteArraySlice): NaturalBigInteger =
+    bas.run { BigInteger(1, array, offset, length) }
+
+fun requireNatural(value: BigInteger): NaturalBigInteger {
+    if (value.signum() < 0) throw IllegalArgumentException("Big integer $value is not a natural number")
+    return value
 }

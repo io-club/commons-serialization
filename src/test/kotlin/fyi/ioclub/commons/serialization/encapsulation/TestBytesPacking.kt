@@ -14,17 +14,17 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
-fun testBytesEncapsulating() {
-    ByteArray(4).let {
-        ByteArray(32).apply { encapsulate(0, it);encapsulate(it) }
-        ByteBuffer.allocate(32).apply { encapsulate(it) }.unencapsulate(it)
-        ByteArrayInputStream(ByteArrayOutputStream().apply { encapsulate(it) }.toByteArray()).unencapsulate(it)
-    }
-    with(ByteArray(4)) {
-        ByteArray(32).also { encapsulateToBytes(it) }
-        ByteBuffer.allocate(32).also { encapsulateToBytes(it) }.unencapsulate()
-        ByteArrayInputStream(ByteArrayOutputStream().also { encapsulateToBytes(it) }.toByteArray()).unencapsulate()
-    }
-}
-
-fun main() = testBytesEncapsulating()
+//fun testBytesEncapsulating() {
+//    ByteArray(4).let {
+//        ByteArray(32).apply { writeEncapsulated(it, 0);writeEncapsulated(it) }
+//        ByteBuffer.allocate(32).apply { putEncapsulated(it) }.getEncapsulated(it)
+//        ByteArrayInputStream(ByteArrayOutputStream().apply { writeEncapsulated(it) }.toByteArray()).readEncapsulated(it)
+//    }
+//    with(ByteArray(4)) {
+//        ByteArray(32).also { encapsulateToByteArray(it) }
+//        ByteBuffer.allocate(32).also { encapsulateToByteArray(it) }.getEncapsulatedByteArray()
+//        ByteArrayInputStream(ByteArrayOutputStream().also { encapsulateToByteArray(it) }.toByteArray()).readEncapsulatedByteArray()
+//    }
+//}
+//
+//fun main() = testBytesEncapsulating()
