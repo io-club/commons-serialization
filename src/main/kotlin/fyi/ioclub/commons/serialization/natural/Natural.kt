@@ -91,7 +91,12 @@ fun ByteArraySlice.putNatural(value: Byte): Int = fillBasTmpl {
     lead0To
 }
 
-/** For [ByteArraySlice.putNatural]. */
+/**
+ * For [ByteArraySlice.putNatural].
+ *
+ * Does not throw exception when [value] is too big for [this],
+ * like [Int.toByte].
+ */
 private inline fun <T> ByteArraySlice.putNTmpl(value: T, shrToByte: (T, Int) -> Byte) = fillBasTmpl {
     arrayIterator(endArrayIndexExclusive).iterateInReverse().run {
         Iterable { this }.forEachIndexed { i, _ -> set(shrToByte(value, i * Byte.SIZE_BITS)) }
@@ -176,6 +181,11 @@ fun Byte.naturalTo(destination: ByteArraySlice) = let(destination::putNatural)
 
 // `T.naturalToBytes(length: Int): ByteArray`, `T` for integral type
 
+/**
+ * If [this] equals [java.math.BigInteger.ZERO]
+ * and [length] equals [NATURAL_BIG_INTEGER_AUTO_LEAST_LENGTH],
+ * then returns an empty byte array.
+ */
 fun NaturalBigInteger.naturalToByteArray(length: Int = AUTO): ByteArray =
     naturalToByteArraySlice(length).run { if (length == AUTO) toSlicedArray() else array }
 
@@ -184,6 +194,11 @@ fun Int.naturalToByteArray(length: Int = Int.SIZE_BYTES): ByteArray = naturalToB
 fun Short.naturalToByteArray(length: Int = Short.SIZE_BYTES): ByteArray = naturalToByteArraySlice(length).array
 fun Byte.naturalToByteArray(length: Int = Byte.SIZE_BYTES): ByteArray = naturalToByteArraySlice(length).array
 
+/**
+ * If [this] equals [java.math.BigInteger.ZERO]
+ * and [length] equals [NATURAL_BIG_INTEGER_AUTO_LEAST_LENGTH],
+ * then returns an empty byte array slice.
+ */
 fun NaturalBigInteger.naturalToByteArraySlice(length: Int = AUTO): ByteArraySlice = with(let(::requireNatural)) {
     if (length == AUTO) {
         toByteArray().run { if (first() != BYTE_0) asSlice() else asSliceFrom(1) }

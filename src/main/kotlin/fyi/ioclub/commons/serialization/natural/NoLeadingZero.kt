@@ -34,7 +34,7 @@ fun ByteArraySlice.noLeadingZeroTo(destination: ByteArraySlice): Int = with(toNo
     length
 }
 
-fun ByteArraySlice.toNoLeadingZeroByteArray(): ByteArray = toNoLeadingZeroByteArraySlice().toSlicedArray()
+fun ByteArraySlice.naturalToNoLeadingZeroByteArray(): ByteArray = toNoLeadingZeroByteArraySlice().toSlicedArray()
 
 fun ByteArraySlice.toNoLeadingZeroByteArraySlice(): ByteArraySlice = asSliceFrom(arrayFindFirstNonZeroByte())
 
@@ -49,15 +49,15 @@ fun ByteArraySlice.putNaturalNoLeadingZero(value: Short) = putNoLead0LISTmpl(val
 
 private inline fun ByteArraySlice.putNoLead0LISTmpl(nToBas: () -> ByteArraySlice) = wOpTmpl(nToBas, ::noLeadingZeroTo)
 
-fun NaturalBigInteger.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
-fun Long.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
-fun Int.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
-fun Short.toNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun NaturalBigInteger.naturalToNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun Long.naturalToNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun Int.naturalToNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
+fun Short.naturalToNoLeadingZero(destination: ByteArraySlice) = let(destination::putNaturalNoLeadingZero)
 
-fun NaturalBigInteger.toNoLeadingZeroByteArray(): ByteArray = naturalToByteArray(AUTO)
-fun Long.toNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
-fun Int.toNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
-fun Short.toNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
+fun NaturalBigInteger.naturalToNoLeadingZeroByteArray(): ByteArray = naturalToByteArray(AUTO)
+fun Long.naturalToNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
+fun Int.naturalToNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
+fun Short.naturalToNoLeadingZeroByteArray(): ByteArray = naturalToNoLeadingZeroByteArraySlice().toSlicedArray()
 
 fun NaturalBigInteger.naturalToNoLeadingZeroByteArraySlice(): ByteArraySlice = naturalToByteArraySlice(AUTO)
 
