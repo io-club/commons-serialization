@@ -10,18 +10,10 @@
 
 package fyi.ioclub.commons.serialization.encapsulation
 
-import fyi.ioclub.commons.datamodel.array.concat.concat
 import fyi.ioclub.commons.datamodel.array.slice.ByteArraySlice
 import fyi.ioclub.commons.datamodel.array.slice.asSliceTo
-import fyi.ioclub.commons.datamodel.array.slice.put
 import fyi.ioclub.commons.serialization.natural.NaturalBigInteger
 import java.io.OutputStream
-import java.nio.ByteBuffer
-
-internal fun checkIndexBounds(capacity: Int, offset: Int, length: Int) {
-    if (offset < 0) throw IndexOutOfBoundsException(offset)
-    (offset + length).let { if (it > capacity) throw IndexOutOfBoundsException(it) }
-}
 
 internal val BIG_INTEGER_128: NaturalBigInteger = 0b1000_0000L.toBigInteger()
 internal const val U_LONG_128: ULong = 0b1000_0000U

@@ -65,20 +65,6 @@ private inline fun wOpEncTmplWithOff(
 fun ByteArraySlice.encapsulateTo(destination: ByteArraySlice) = let(destination::putEncapsulated)
 
 /**
- * Copies [this] data length and data value to [destination] buffer.
- *
- * @return the number of bytes written
- */
-fun ByteArraySlice.encapsulateTo(destination: ByteBuffer): Int = let(destination::putEncapsulated)
-
-/**
- * Copies [this] data length and data value to [destination] output stream.
- *
- * @return the number of bytes written
- */
-fun ByteArraySlice.encapsulateTo(destination: OutputStream): Int = let(destination::writeEncapsulated)
-
-/**
  * Creates a [ByteArray] and copies [this] data length and data value to it.
  *
  * @return the result [ByteArray]
