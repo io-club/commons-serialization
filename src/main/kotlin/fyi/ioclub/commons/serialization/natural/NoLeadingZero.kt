@@ -34,7 +34,7 @@ fun ByteArraySlice.noLeadingZeroTo(destination: ByteArraySlice): Int = with(toNo
     length
 }
 
-fun ByteArraySlice.naturalToNoLeadingZeroByteArray(): ByteArray = toNoLeadingZeroByteArraySlice().toSlicedArray()
+fun ByteArraySlice.toNoLeadingZeroByteArray(): ByteArray = toNoLeadingZeroByteArraySlice().toSlicedArray()
 
 fun ByteArraySlice.toNoLeadingZeroByteArraySlice(): ByteArraySlice = asSliceFrom(arrayFindFirstNonZeroByte())
 

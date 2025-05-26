@@ -20,13 +20,13 @@ fun ByteArraySlice.putNaturalNoLeadingZero(value: ULong) = putNaturalNoLeadingZe
 fun ByteArraySlice.putNaturalNoLeadingZero(value: UInt) = putNaturalNoLeadingZero(value.toInt())
 fun ByteArraySlice.putNaturalNoLeadingZero(value: UShort) = putNaturalNoLeadingZero(value.toShort())
 
-fun ULong.toNoLeadingZero(destination: ByteArraySlice) = toLong().toNoLeadingZero(destination)
-fun UInt.toNoLeadingZero(destination: ByteArraySlice) = toInt().toNoLeadingZero(destination)
-fun UShort.toNoLeadingZero(destination: ByteArraySlice) = toShort().toNoLeadingZero(destination)
+fun ULong.naturalToNoLeadingZero(destination: ByteArraySlice) = toLong().naturalToNoLeadingZero(destination)
+fun UInt.naturalToNoLeadingZero(destination: ByteArraySlice) = toInt().naturalToNoLeadingZero(destination)
+fun UShort.naturalToNoLeadingZero(destination: ByteArraySlice) = toShort().naturalToNoLeadingZero(destination)
 
-fun ULong.toNoLeadingZeroByteArray() = toLong().toNoLeadingZeroByteArray()
-fun UInt.toNoLeadingZeroByteArray() = toInt().toNoLeadingZeroByteArray()
-fun UShort.toNoLeadingZeroByteArray() = toShort().toNoLeadingZeroByteArray()
+fun ULong.naturalToNoLeadingZeroByteArray() = toLong().naturalToNoLeadingZeroByteArray()
+fun UInt.naturalToNoLeadingZeroByteArray() = toInt().naturalToNoLeadingZeroByteArray()
+fun UShort.naturalToNoLeadingZeroByteArray() = toShort().naturalToNoLeadingZeroByteArray()
 
 fun ULong.naturalToNoLeadingZeroByteArraySlice() = toLong().naturalToNoLeadingZeroByteArraySlice()
 fun UInt.naturalToNoLeadingZeroByteArraySlice() = toInt().naturalToNoLeadingZeroByteArraySlice()
