@@ -19,12 +19,11 @@ import fyi.ioclub.commons.datamodel.array.slice.write
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
-
 // To get array index of the first non-zero byte
 
 fun ByteArraySlice.arrayFindFirstNonZeroByte(): Int = with(arrayIterator()) {
     Iterable { this }.any { it != BYTE_0 }
-    nextIndex()
+    previousIndex()
 }
 
 // To get no-leading-zero byte array
@@ -38,10 +37,10 @@ fun ByteArraySlice.toNoLeadingZeroByteArray(): ByteArray = toNoLeadingZeroByteAr
 
 fun ByteArraySlice.toNoLeadingZeroByteArraySlice(): ByteArraySlice = asSliceFrom(arrayFindFirstNonZeroByte())
 
-// To put into byte array
 
+// To put into byte array
 fun ByteArraySlice.putNaturalNoLeadingZero(value: NaturalBigInteger) =
-    wOpTmpl(value::naturalToByteArraySlice, ::copyInto)
+    wOpTmpl(value::naturalToByteArraySlice) { let(it::copyInto) }
 
 fun ByteArraySlice.putNaturalNoLeadingZero(value: Long) = putNoLead0LISTmpl(value::naturalToByteArraySlice)
 fun ByteArraySlice.putNaturalNoLeadingZero(value: Int) = putNoLead0LISTmpl(value::naturalToByteArraySlice)

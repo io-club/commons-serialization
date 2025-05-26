@@ -58,7 +58,8 @@ private inline fun wOpEncTmplWithOff(
 }
 
 /**
- * Copies [this] data length and data value to position [offset] of [destination] array.
+ * Copies [this] data length and data value to
+ * position [ByteArraySlice.offset] of [ByteArraySlice.array] of [destination].
  *
  * @return the number of bytes written
  */

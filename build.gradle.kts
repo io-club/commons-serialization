@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "fyi.ioclub"
-version = "3.0.0-SNAPSHOT"
+version = "3.0.1-SNAPSHOT"
 
 repositories {
     mavenLocal()
@@ -28,9 +28,6 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 kotlin {
     jvmToolchain(17)
 }
